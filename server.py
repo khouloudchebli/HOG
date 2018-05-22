@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response, jsonify
 import json
 import sqlite3
 from db import leaderboard, insert_challenges, update_challenges, insert_challenges, insert_game, create_connection, insert_users
@@ -30,9 +30,6 @@ def add_user():
     return ("failed because the field of the request are wrong")
 
 
-
-
-
 @app.route('/api/hog/leaderboard')
 def getleaderboard():
     """Return the list of thinketeers along with their respective scores
@@ -40,19 +37,37 @@ def getleaderboard():
     return jsonify(leaderboard())
 
 
-@app.route('/api/hog/challenge', methods = ['POST'])
+@app.route('/api/hog/challenges', methods = ['POST'])
 def who_challenge ():
     """ in the body of the request: we define who get challenged by whom 
     """
-    req_data = request.get_json()
-    #validate the number of request's fields 
+    try:
+        req_data = request.get_json()
+    except:
+        return Response("{'message':'1'}", status=400, mimetype='application/json')
+    #validate the number of request's fields
+
     if len (req_data.keys())!=3:
-        return "number of arguments is incorrect"
+        return "Number of arguments is incorrect"
     elif ('player1_id') and ('player2_id') and ('status') in req_data:
-        insert_challenges(req_data["player1_id"], req_data["player2_id"], req_data["status"])
+        try:
+            assert type(req_data["player1_id"]) == type(2)
+        except:
+            return 'the type of the fields is not integer'
+        try: 
+            assert type(req_data["player2_id"]) == type(2)
+        except:
+            return 'the type of the fields is not integer'
+        try:
+            assert (req_data["status"]) == "accept" or (req_data["status"]) =="refuse"
+        except:
+            return 'the value of status is not correct'
+        try:
+            insert_challenges(req_data["player1_id"], req_data["player2_id"], req_data["status"])
+        except:
+            return"the insersation is failed"
         return 'The player {} is challenging the player {}'.format(req_data["player1_id"], req_data["player2_id"])
-    
-    return ("failed because the field of the request are wrong")
+        
 
 
 @app.route('/api/hog/challenges/<int:challenge_id>', methods=['POST'])
@@ -63,9 +78,14 @@ def challenge(challenge_id):
     if len (req_data.keys())!=1:
         return "number of arguments is incorrect"
     elif ('status') in req_data:
-        #update_challenges(challenge_id, req_data['status'] )
-        return '{} is {}ing the challenge {}'.format(req_data['player1_id'], req_data['decision'], challenge_id)
-    return ("failed because the field of the request are wrong")
+        try:
+            assert (req_data["status"]) == 'accept' or (req_data["status"]) == 'refuse'
+        except:
+            return 'the value of status is not correct'
+        update_challenges(request.args.get('challenge_id'), req_data['status'] )
+        return 'The updated status is {}'.format(req_data['status'])
+    
+    return ("request fields are wrong")
 
 
 @app.route('/api/hog/game', methods=['POST'])
@@ -74,14 +94,34 @@ def game():
     #challenge_id, player1_id, player2_id, score0, score1
     if len (req_data.keys())!=5:
         return "number of arguments is incorrect"
-    elif ('player1_id') and ('player2_id') and ('score0') and ('score1') and ('Challenge_id'):
+    elif ('player1_id') and ('player2_id') and ('score0') and ('score1') and ('challenge_id') in req_data:
+        try:
+            assert type(req_data["player1_id"]) == type(2)
+        except:
+            return 'the type of the player1_id is not integer'
+        try: 
+            assert type(req_data["player2_id"]) == type(2)
+        except:
+            return 'the type of the player2_id is not integer'
+        try:
+            assert type(req_data["score0"]) == type(2)
+        except:
+            return 'the type of score0 is not integer'
+        try: 
+            assert type(req_data["score1"]) == type(2)
+        except:
+            return 'the type of score1 is not integer'
+        try:
+            assert type(req_data["challenge_id"]) == type(2)
+        except:
+            return 'the value of challenge_id is integer'
+
         insert_game (req_data['player1_id'],req_data['player2_id'],req_data['score0'],req_data['score1'],
         req_data['challenge_id'])
         return 'Game over! {}"s score is {} and {}"s score is {}'.format(req_data['player1_id'],
-        req_data['score0'],req_data['player2_id'], req_data['score1'] )
+        req_data['score0'],req_data['player2_id'], req_data['score1'])
+
     return ("failed because the field of the request are wrong")
-
-
 
 
 if __name__ == '__main__':
