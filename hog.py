@@ -107,6 +107,7 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
         if is_swap(score0, score1):
             score0, score1 = score1, score0
         player = other(player)
+        say = say(score0,score1)
     return score0, score1
 
 
@@ -161,6 +162,11 @@ def both(f, g):
     def say(score0, score1):
         return both(f(score0, score1), g(score0, score1))
     return say
+def print_gain(score, who):
+    if score == 0:
+        print("1 point! That's the biggest gain yet for Player"who)
+    else:
+        print(score" points! That's the biggest gain yet for Player"who)
 
 
 def announce_highest(who, previous_high=0, previous_score=0):
@@ -178,9 +184,22 @@ def announce_highest(who, previous_high=0, previous_score=0):
     20 points! That's the biggest gain yet for Player 1
     >>> f6 = f5(20, 55) # Player 1 gets 15 points; not enough for a new high
     """
-    assert who == 0 or who == 1, 'The who argument should indicate a player.'
-    # BEGIN PROBLEM 7
-    "*** YOUR CODE HERE ***"
+    assert who == 0 or who == 1, 'The who argument should indicate a player'
+    def say_highest(score0, score1):
+        new_gain = previous_high
+        if who == 0:
+            new_score = score0
+            if (score0 - previous_score) > previous_high:
+                new_gain = score0 - previous_score
+                print_gain(who, new_gain)
+        else:
+            new_score = score1
+            if (score1 - previous_score) > previous_high:
+                new_gain = score1 - previous_score
+                print_gain(who, new_gain)
+        return announce_highest(who, new_gain, new_score)
+    return say_highest
+
     # END PROBLEM 7
 
 
@@ -310,7 +329,7 @@ def swap_strategy(score, opponent_score, margin=8, num_rolls=4):
     NUM_ROLLS.
     """
     # BEGIN PROBLEM 11
-    return 4  # Replace this statement
+    return 0 if is_swap(score,opponent_score) or free_bacon(opponent_score)>= margin else num_rolls
     # END PROBLEM 11
 
 
